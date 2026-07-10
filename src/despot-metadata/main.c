@@ -44,20 +44,20 @@ int main(int argc, char** argv) {
     return 1;
   }
   
-  int fd = open(filename, O_RDONLY);
-  if (fd < 0) {
+  FILE* file = fopen(filename, "rb");
+  if (!file) {
     fprintf(stderr, "%s: Failed to open file: %s\n", argv[0], strerror(errno));
     return 1;
   }
   
   despot_ctx_t* ctx;
   despot_result_t result;
-  if ((result = despot_read_from_fd(&ctx, fd)) != DESPOT_RESULT_SUCCESS) {
+  if ((result = despot_read_from_file(&ctx, file)) != DESPOT_RESULT_SUCCESS) {
     fprintf(stderr, "%s: Failed to read metadata: %s\n", argv[0], despot_result_to_string(result));
     return 1;
   }
   
-  close(fd);
+  fclose(file);
   
   try_get_metadata(ctx, DESPOT_TAG_TITLE, "Title");
   try_get_metadata(ctx, DESPOT_TAG_ARTIST, "Artist");

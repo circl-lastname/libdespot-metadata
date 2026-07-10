@@ -1,33 +1,37 @@
-#include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 
 #include <despot.h>
 
 #include "io.h"
 
-despot_result_t io_seek(io_t* io, size_t offset) {
-  if (io->source == IO_SOURCE_MEM) {
-    if (offset >= io->mem.size) {
-      return DESPOT_RESULT_UNEXPECTED_EOF;
-    }
-    
-    io->mem.offset = offset;
-    return DESPOT_RESULT_SUCCESS;
-  } else if (io->source == IO_SOURCE_FD) {
-    if (lseek(io->fd, offset, SEEK_SET) < 0) {
-      if (errno == EINVAL) {
-        return DESPOT_RESULT_UNEXPECTED_EOF;
-      } else {
-        return DESPOT_RESULT_SEE_ERRNO;
-      }
-    }
-    
-    return DESPOT_RESULT_SUCCESS;
-  } else {
-    return DESPOT_RESULT_INTERNAL_ERROR;
+despot_result_t io_init(io_t* io, FILE* file) {
+  io->file = file;
+  
+  if (fseek(file, 0, SEEK_END) < 0) {
+    return DESPOT_RESULT_SEE_ERRNO;
   }
+  
+  io->size = ftell(file);
+  
+  if (fseek(file, 0, SEEK_SET) < 0) {
+    return DESPOT_RESULT_SEE_ERRNO;
+  }
+  
+  return DESPOT_RESULT_SUCCESS;
+}
+
+despot_result_t io_seek(io_t* io, size_t offset) {
+  if (offset >= io->size) {
+    return DESPOT_RESULT_UNEXPECTED_EOF;
+  }
+  
+  if (fseek(io->file, offset, SEEK_SET) < 0) {
+    return DESPOT_RESULT_SEE_ERRNO;
+  }
+  
+  return DESPOT_RESULT_SUCCESS;
 }
 
 despot_result_t io_skip(io_t* io, size_t amount) {
@@ -35,36 +39,19 @@ despot_result_t io_skip(io_t* io, size_t amount) {
     return DESPOT_RESULT_SUCCESS;
   }
   
-  if (io->source == IO_SOURCE_MEM) {
-    if (io->mem.offset+amount > io->mem.size) {
-      return DESPOT_RESULT_UNEXPECTED_EOF;
-    }
-    
-    io->mem.offset += amount;
-    return DESPOT_RESULT_SUCCESS;
-  } else if (io->source == IO_SOURCE_FD) {
-    if (lseek(io->fd, amount, SEEK_CUR) < 0) {
-      if (errno == EINVAL) {
-        return DESPOT_RESULT_UNEXPECTED_EOF;
-      } else {
-        return DESPOT_RESULT_SEE_ERRNO;
-      }
-    }
-    
-    return DESPOT_RESULT_SUCCESS;
-  } else {
-    return DESPOT_RESULT_INTERNAL_ERROR;
+  if (ftell(io->file)+amount >= io->size) {
+    return DESPOT_RESULT_UNEXPECTED_EOF;
   }
+  
+  if (fseek(io->file, amount, SEEK_CUR) < 0) {
+    return DESPOT_RESULT_SEE_ERRNO;
+  }
+  
+  return DESPOT_RESULT_SUCCESS;
 }
 
 size_t io_tell(io_t* io) {
-  if (io->source == IO_SOURCE_MEM) {
-    return io->mem.offset;
-  } else if (io->source == IO_SOURCE_FD) {
-    return lseek(io->fd, 0, SEEK_CUR);
-  } else {
-    return 0;
-  }
+  return ftell(io->file);
 }
 
 despot_result_t io_read(io_t* io, void* buffer, size_t amount) {
@@ -72,35 +59,24 @@ despot_result_t io_read(io_t* io, void* buffer, size_t amount) {
     return DESPOT_RESULT_SUCCESS;
   }
   
-  if (io->source == IO_SOURCE_MEM) {
-    if (io->mem.offset+amount > io->mem.size) {
-      return DESPOT_RESULT_UNEXPECTED_EOF;
-    }
+  size_t amount_read = 0;
+  
+  while (amount_read < amount) {
+    size_t read_result = fread(buffer+amount_read, 1, amount-amount_read, io->file);
     
-    memcpy(buffer, io->mem.buffer+io->mem.offset, amount);
-    io->mem.offset += amount;
-    return DESPOT_RESULT_SUCCESS;
-  } else if (io->source == IO_SOURCE_FD) {
-    size_t amount_read = 0;
-    
-    while (amount_read < amount) {
-      ssize_t read_result = read(io->fd, buffer+amount_read, amount-amount_read);
-      
-      if (read_result == 0) {
+    if (read_result < amount-amount_read) {
+      if (feof(io->file)) {
         return DESPOT_RESULT_UNEXPECTED_EOF;
-      } else if (read_result < 0) {
-        if (errno == EINTR) {
-          continue;
-        } else {
-          return DESPOT_RESULT_SEE_ERRNO;
-        }
       }
       
-      amount_read += read_result;
+      if (ferror(io->file)) {
+        // Can't find a manpage that says fread or ferror set errno but whatever
+        return DESPOT_RESULT_SEE_ERRNO;
+      }
     }
     
-    return DESPOT_RESULT_SUCCESS;
-  } else {
-    return DESPOT_RESULT_INTERNAL_ERROR;
+    amount_read += read_result;
   }
+  
+  return DESPOT_RESULT_SUCCESS;
 }

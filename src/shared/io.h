@@ -8,23 +8,12 @@
 
 #include "shared/misc.h"
 
-typedef enum {
-  IO_SOURCE_MEM,
-  IO_SOURCE_FD
-} io_source_t;
-
 typedef struct {
-  io_source_t source;
-  union {
-    struct {
-      void* buffer;
-      size_t size;
-      size_t offset;
-    } mem;
-    int fd;
-  };
+  FILE* file;
+  size_t size;
 } io_t;
 
+despot_result_t io_init(io_t* io, FILE* file);
 despot_result_t io_seek(io_t* io, size_t offset);
 despot_result_t io_skip(io_t* io, size_t amount);
 size_t io_tell(io_t* io);

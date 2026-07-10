@@ -9,6 +9,7 @@
 
 #include "ctx.h"
 #include "flac.h"
+#include "shared/io.h"
 #include "shared/misc.h"
 #include "shared/stb_ds.h"
 
@@ -56,42 +57,10 @@ static despot_result_t parse(despot_ctx_t* ctx, io_t* io) {
   return DESPOT_RESULT_UNRECOGNIZED_FORMAT;
 }
 
-EXPORT despot_result_t despot_read_from_fd(despot_ctx_t** ctx, int fd) {
-  *ctx = calloc(1, sizeof(despot_ctx_t));
-  
-  (*ctx)->io.source = IO_SOURCE_FD;
-  (*ctx)->io.fd = dup(fd);
-  
-  if ((*ctx)->io.fd < 0) {
-    free(*ctx);
-    *ctx = NULL;
-    return DESPOT_RESULT_SEE_ERRNO;
-  }
-  
-  if (lseek((*ctx)->io.fd, 0, SEEK_SET) < 0) {
-    free(*ctx);
-    *ctx = NULL;
-    return DESPOT_RESULT_SEE_ERRNO;
-  }
-  
-  return parse(*ctx, &(*ctx)->io);
-}
-
 EXPORT despot_result_t despot_read_from_file(despot_ctx_t** ctx, FILE* file) {
-  int fd = fileno(file);
-  if (fd < 0) {
-    return DESPOT_RESULT_SEE_ERRNO;
-  }
-  
-  return despot_read_from_fd(ctx, fd);
-}
-
-EXPORT despot_result_t despot_read_from_mem(despot_ctx_t** ctx, void* buffer, size_t size) {
   *ctx = calloc(1, sizeof(despot_ctx_t));
   
-  (*ctx)->io.source = IO_SOURCE_MEM;
-  (*ctx)->io.mem.buffer = buffer;
-  (*ctx)->io.mem.size = size;
+  MUST(io_init(&(*ctx)->io, file));
   
   return parse(*ctx, &(*ctx)->io);
 }
@@ -125,7 +94,7 @@ EXPORT despot_result_t despot_load_picture(despot_ctx_t* ctx, unsigned index, vo
     *size = picture_size;
   }
   
-  // TODO: Figure out if ID3 unsynchronisation is needed nowadays, then call into an format specific function
+  // TODO: Figure out if ID3 unsynchronisation is needed nowadays, then call into a format specific function
   *buffer = malloc(picture_size);
   MUST(io_seek(&ctx->io, ctx->pictures[index].source_offset));
   MUST(io_read(&ctx->io, *buffer, picture_size));
@@ -208,10 +177,6 @@ EXPORT const char* despot_picture_type_to_string(despot_picture_type_t type) {
 }
 
 EXPORT void despot_free_ctx(despot_ctx_t* ctx) {
-  if (ctx->io.source == IO_SOURCE_FD) {
-    close(ctx->io.fd);
-  }
-  
   if (ctx->vendor) {
     free(ctx->vendor);
   }
