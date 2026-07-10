@@ -4,7 +4,6 @@ Build lib libdespot.so "
 libdespot/flac.c
 libdespot/flac-picture.c
 libdespot/main.c
-libdespot/ogg.c
 libdespot/vorbis-comment.c
 shared/io.c
 shared/stb_ds.c

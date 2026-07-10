@@ -9,7 +9,6 @@
 
 #include "ctx.h"
 #include "flac.h"
-#include "ogg.h"
 #include "shared/misc.h"
 #include "shared/stb_ds.h"
 
@@ -52,10 +51,6 @@ static despot_result_t parse(despot_ctx_t* ctx, io_t* io) {
     // Relevant: https://www.rfc-editor.org/rfc/rfc9639.html
     case 0x664c6143:
       return flac_parse(ctx, io);
-    // Ogg
-    // Relevant: https://www.rfc-editor.org/rfc/rfc3533.html
-    //case 0x4f676753:
-    //  return ogg_parse(ctx, io);
   }
   
   return DESPOT_RESULT_UNRECOGNIZED_FORMAT;
