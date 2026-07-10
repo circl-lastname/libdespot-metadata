@@ -1,9 +1,14 @@
 #include <despot.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+void print_usage(const char* name) {
+  fprintf(stderr, "Usage: %s [-v] FILE\n", name);
+}
 
 void try_get_metadata(despot_ctx_t* ctx, despot_tag_id_t tag, char* name) {
   const char* value = despot_get_basic_tag(ctx, tag);
@@ -13,12 +18,33 @@ void try_get_metadata(despot_ctx_t* ctx, despot_tag_id_t tag, char* name) {
 }
 
 int main(int argc, char** argv) {
-  if (argc != 2) {
-    fprintf(stderr, "Usage: %s FILE\n", argv[0]);
+  const char* filename = NULL;
+  bool be_verbose = false;
+  
+  for (int i = 1; i < argc; i++) {
+    if (!strcmp(argv[i], "-v")) {
+      if (!be_verbose) {
+        be_verbose = true;
+      } else {
+        print_usage(argv[0]);
+        return 1;
+      }
+    } else {
+      if (!filename) {
+        filename = argv[i];
+      } else {
+        print_usage(argv[0]);
+        return 1;
+      }
+    }
+  }
+  
+  if (!filename) {
+    print_usage(argv[0]);
     return 1;
   }
   
-  int fd = open(argv[1], O_RDONLY);
+  int fd = open(filename, O_RDONLY);
   if (fd < 0) {
     fprintf(stderr, "%s: Failed to open file: %s\n", argv[0], strerror(errno));
     return 1;
@@ -42,6 +68,17 @@ int main(int argc, char** argv) {
   try_get_metadata(ctx, DESPOT_TAG_TRACK_AMOUNT, "Total tracks");
   try_get_metadata(ctx, DESPOT_TAG_DISC_AMOUNT, "Total discs");
   try_get_metadata(ctx, DESPOT_TAG_VENDOR, "Vendor");
+  
+  if (be_verbose) {
+    puts("\nRaw tags:");
+    
+    size_t tags_amount;
+    despot_tag_t* tags = despot_get_tags(ctx, &tags_amount);
+    
+    for (size_t i = 0; i < tags_amount; i++) {
+      printf("  %s = %s\n", tags[i].key, tags[i].value);
+    }
+  }
   
   size_t pictures_amount;
   despot_picture_t* pictures = despot_get_pictures(ctx, &pictures_amount);
