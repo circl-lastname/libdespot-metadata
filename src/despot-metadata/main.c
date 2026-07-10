@@ -54,6 +54,8 @@ int main(int argc, char** argv) {
   despot_result_t result;
   if ((result = despot_read_from_file(&ctx, file)) != DESPOT_RESULT_SUCCESS) {
     fprintf(stderr, "%s: Failed to read metadata: %s\n", argv[0], despot_result_to_string(result));
+    despot_free_ctx(ctx);
+    fclose(file);
     return 1;
   }
   
