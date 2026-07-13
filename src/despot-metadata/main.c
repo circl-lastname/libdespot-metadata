@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     puts("\nRaw tags:");
     
     size_t tags_amount;
-    despot_tag_t* tags = despot_get_tags(ctx, &tags_amount);
+    const despot_tag_t* tags = despot_get_tags(ctx, &tags_amount);
     
     for (size_t i = 0; i < tags_amount; i++) {
       printf("  %s = %s\n", tags[i].key, tags[i].value);
@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
   }
   
   size_t pictures_amount;
-  despot_picture_t* pictures = despot_get_pictures(ctx, &pictures_amount);
+  const despot_picture_t* pictures = despot_get_pictures(ctx, &pictures_amount);
   
   for (size_t i = 0; i < pictures_amount; i++) {
     printf("\nPicture %zu:\n", i+1);

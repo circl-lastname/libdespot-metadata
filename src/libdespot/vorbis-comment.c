@@ -53,7 +53,7 @@ despot_result_t vorbis_comment_parse(despot_ctx_t* ctx, io_t* io) {
       continue;
     }
     
-    despot_tag_t* tag = shgetp_null(ctx->metadata, key);
+    tag_t* tag = shgetp_null(ctx->metadata, key);
     
     if (!tag) {
       shput(ctx->metadata, key, value);

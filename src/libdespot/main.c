@@ -65,9 +65,10 @@ EXPORT despot_result_t despot_read_from_file(despot_ctx_t** ctx, FILE* file) {
   return parse(*ctx, &(*ctx)->io);
 }
 
-EXPORT despot_tag_t* despot_get_tags(despot_ctx_t* ctx, size_t* amount) {
+EXPORT const despot_tag_t* despot_get_tags(despot_ctx_t* ctx, size_t* amount) {
   *amount = shlenu(ctx->metadata);
-  return ctx->metadata;
+  // Cast internal tag_t to compatible public despot_tag_t which is has const char*s
+  return (const despot_tag_t*)ctx->metadata;
 }
 
 EXPORT const char* despot_get_tag(despot_ctx_t* ctx, const char* tag) {
@@ -78,7 +79,7 @@ EXPORT const char* despot_get_basic_tag(despot_ctx_t* ctx, despot_tag_id_t tag) 
   return ctx->get_basic_tag(ctx, tag);
 }
 
-EXPORT despot_picture_t* despot_get_pictures(despot_ctx_t* ctx, size_t* amount) {
+EXPORT const despot_picture_t* despot_get_pictures(despot_ctx_t* ctx, size_t* amount) {
   *amount = arrlenu(ctx->pictures);
   return ctx->pictures;
 }

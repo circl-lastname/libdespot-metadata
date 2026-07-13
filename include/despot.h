@@ -49,8 +49,8 @@ typedef enum {
 } despot_picture_type_t;
 
 typedef struct {
-  char* key;
-  char* value;
+  const char* key;
+  const char* value;
 } despot_tag_t;
 
 typedef struct {
@@ -67,11 +67,11 @@ typedef struct despot_ctx_s despot_ctx_t;
 
 despot_result_t despot_read_from_file(despot_ctx_t** ctx, FILE* file);
 
-despot_tag_t* despot_get_tags(despot_ctx_t* ctx, size_t* amount);
+const despot_tag_t* despot_get_tags(despot_ctx_t* ctx, size_t* amount);
 const char* despot_get_tag(despot_ctx_t* ctx, const char* tag);
 const char* despot_get_basic_tag(despot_ctx_t* ctx, despot_tag_id_t tag);
 
-despot_picture_t* despot_get_pictures(despot_ctx_t* ctx, size_t* amount);
+const despot_picture_t* despot_get_pictures(despot_ctx_t* ctx, size_t* amount);
 despot_result_t despot_load_picture(despot_ctx_t* ctx, unsigned index, void** buffer, size_t* size);
 int despot_find_preferred_picture(despot_ctx_t* ctx);
 
