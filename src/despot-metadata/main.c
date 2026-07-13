@@ -1,10 +1,8 @@
 #include <despot.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 
 void print_usage(const char* name) {
   fprintf(stderr, "Usage: %s [-v] FILE\n", name);
