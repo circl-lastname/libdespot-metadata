@@ -80,3 +80,26 @@ despot_result_t io_read(io_t* io, void* buffer, size_t amount) {
   
   return DESPOT_RESULT_SUCCESS;
 }
+
+despot_result_t io_write(io_t* io, const void* buffer, size_t amount) {
+  if (amount == 0) {
+    return DESPOT_RESULT_SUCCESS;
+  }
+  
+  size_t amount_written = 0;
+  
+  while (amount_written < amount) {
+    size_t write_result = fwrite(buffer+amount_written, 1, amount-amount_written, io->file);
+    
+    if (write_result < amount-amount_written) {
+      if (ferror(io->file)) {
+        // Can't find a manpage that says fwrite or ferror set errno but whatever
+        return DESPOT_RESULT_SEE_ERRNO;
+      }
+    }
+    
+    amount_written += write_result;
+  }
+  
+  return DESPOT_RESULT_SUCCESS;
+}

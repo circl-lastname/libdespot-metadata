@@ -1,0 +1,6 @@
+BuildRule io-test "" ""
+
+BuildWithDependency bin io-test lib/libdespot.so "
+io-test/main.c
+shared/io.c
+"

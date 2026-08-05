@@ -1,2 +1,3 @@
 IncludeBuildInfo src/despot-metadata
+IncludeBuildInfo src/io-test
 IncludeBuildInfo src/libdespot
