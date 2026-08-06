@@ -1,9 +1,10 @@
-#include "shared/io.h"
-#include "shared/misc.h"
 #include <despot.h>
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <inttypes.h>
+
+#include "shared/io.h"
+#include "shared/misc.h"
 
 despot_result_t main2() {
   {

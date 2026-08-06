@@ -95,10 +95,15 @@ EXPORT despot_result_t despot_load_picture(despot_ctx_t* ctx, unsigned index, vo
     *size = picture_size;
   }
   
+  MUST(io_seek(&ctx->io, ctx->pictures[index].source_offset));
+  
   // TODO: Figure out if ID3 unsynchronisation is needed nowadays, then call into a format specific function
   *buffer = malloc(picture_size);
-  MUST(io_seek(&ctx->io, ctx->pictures[index].source_offset));
-  MUST(io_read(&ctx->io, *buffer, picture_size));
+  
+  TRY(io_read(&ctx->io, *buffer, picture_size)) CATCH (
+    free(*buffer);
+    *buffer = NULL;
+  );
   
   return DESPOT_RESULT_SUCCESS;
 }
